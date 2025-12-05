@@ -224,6 +224,11 @@ func handleGlobalConfig(cmd *cobra.Command, _ []string) {
 		globalconfig.DdevGlobalConfig.WSL2NoWindowsHostsMgt = val
 		dirty = true
 	}
+	if cmd.Flag("skip-router-port-check").Changed {
+		val, _ := cmd.Flags().GetBool("skip-router-port-check")
+		globalconfig.DdevGlobalConfig.SkipRouterPortCheck = val
+		dirty = true
+	}
 	if cmd.Flag("router-http-port").Changed {
 		val, _ := cmd.Flags().GetString("router-http-port")
 		globalconfig.DdevGlobalConfig.RouterHTTPPort = val
@@ -344,6 +349,8 @@ func init() {
 	_ = configGlobalCommand.RegisterFlagCompletionFunc("no-bind-mounts", configCompletionFunc([]string{"true", "false"}))
 	configGlobalCommand.Flags().String("xdebug-ide-location", "", "For less usual IDE locations specify where the IDE is running for Xdebug to reach it (for advanced use only)")
 	configGlobalCommand.Flags().Bool("wsl2-no-windows-hosts-mgt", false, "WSL2 only; make DDEV ignore Windows-side hosts file (for advanced use only)")
+	configGlobalCommand.Flags().Bool("skip-router-port-check", false, "Skip pre-flight TCP port scan for router ports (use when endpoint protection causes false positives)")
+	_ = configGlobalCommand.RegisterFlagCompletionFunc("skip-router-port-check", configCompletionFunc([]string{"true", "false"}))
 	configGlobalCommand.Flags().String("router-http-port", nodeps.DdevDefaultRouterHTTPPort, "The default router HTTP port for all projects, can be overridden by project configuration")
 	_ = configGlobalCommand.RegisterFlagCompletionFunc("router-http-port", configCompletionFunc([]string{nodeps.DdevDefaultRouterHTTPPort}))
 	configGlobalCommand.Flags().String("router-https-port", nodeps.DdevDefaultRouterHTTPSPort, "The default router HTTPS port for all projects, can be overridden by project configuration")

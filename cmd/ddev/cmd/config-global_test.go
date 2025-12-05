@@ -88,6 +88,7 @@ func TestCmdGlobalConfig(t *testing.T) {
 	assert.Contains(out, "mailpit-https-port=8026")
 	assert.Contains(out, "traefik-monitor-port=10999")
 	assert.Contains(out, "omit-project-name-by-default=false")
+	assert.Contains(out, "skip-router-port-check=false")
 
 	// Update a config
 	// Don't include no-bind-mounts because global testing

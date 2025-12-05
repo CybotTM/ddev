@@ -510,7 +510,17 @@ func ProcessExposePorts(exposePorts []string, routerPorts []string) []string {
 // CheckRouterPorts tries to connect to the ports the router will use as a heuristic to find out
 // if they're available for docker to bind to. Returns an error if either one results
 // in a successful connection.
+// If globalconfig.DdevGlobalConfig.SkipRouterPortCheck is true, this check is skipped entirely.
+// This is useful when endpoint protection software intercepts localhost traffic and returns
+// synthetic SYN-ACK responses, making all ports appear "in use" even though Docker can bind them.
 func CheckRouterPorts(activeApps []*DdevApp) error {
+	// Skip port scanning if configured - useful when endpoint protection software
+	// causes false positives by intercepting localhost traffic
+	if globalconfig.DdevGlobalConfig.SkipRouterPortCheck {
+		util.Debug("Skipping router port check because skip_router_port_check is enabled")
+		return nil
+	}
+
 	routerContainer, _ := FindDdevRouter()
 	var existingExposedPorts []string
 	var err error

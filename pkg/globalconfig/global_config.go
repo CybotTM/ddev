@@ -73,6 +73,7 @@ type GlobalConfig struct {
 	UseHardenedImages        bool                    `yaml:"use_hardened_images"`
 	UseLetsEncrypt           bool                    `yaml:"use_letsencrypt"`
 	WSL2NoWindowsHostsMgt    bool                    `yaml:"wsl2_no_windows_hosts_mgt"`
+	SkipRouterPortCheck      bool                    `yaml:"skip_router_port_check,omitempty"`
 	WebEnvironment           []string                `yaml:"web_environment"`
 	XdebugIDELocation        string                  `yaml:"xdebug_ide_location"`
 	XHProfMode               configTypes.XHProfMode  `yaml:"xhprof_mode,omitempty"`
@@ -504,6 +505,14 @@ func WriteGlobalConfig(config GlobalConfig) error {
 # is used for hosts file management, but doing that requires running sudo and ddev.exe on
 # Windows side; you may not want this if you're running your browser in WSL2 or for
 # various other reasons.
+
+# skip_router_port_check: false
+# Skip the pre-flight TCP port scan for router ports.
+# This is useful when endpoint protection software (like ESET, CrowdStrike, etc.)
+# intercepts localhost traffic and returns synthetic SYN-ACK responses,
+# making all ports appear "in use" even though Docker can successfully bind them.
+# Port binding in Docker remains mandatory; this only skips the heuristic check.
+# See https://github.com/ddev/ddev/issues/7921
 
 # required_docker_compose_version: ""
 # This should only be used in specific cases like troubleshooting.

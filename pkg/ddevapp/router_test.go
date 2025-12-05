@@ -432,3 +432,47 @@ func TestAssignRouterPortsToGenericWebserverPorts(t *testing.T) {
 		})
 	}
 }
+
+// TestCheckRouterPortsSkip tests that CheckRouterPorts respects the SkipRouterPortCheck flag
+func TestCheckRouterPortsSkip(t *testing.T) {
+	// Save original value and restore after test
+	origSkipRouterPortCheck := globalconfig.DdevGlobalConfig.SkipRouterPortCheck
+	t.Cleanup(func() {
+		globalconfig.DdevGlobalConfig.SkipRouterPortCheck = origSkipRouterPortCheck
+	})
+
+	// Get docker IP and occupy a port that would normally cause CheckRouterPorts to fail
+	localIP, err := dockerutil.GetDockerIP()
+	require.NoError(t, err)
+
+	// Find a free port and occupy it
+	listener, err := net.Listen("tcp", localIP+":0")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = listener.Close()
+	})
+
+	occupiedPort := strconv.Itoa(listener.Addr().(*net.TCPAddr).Port)
+
+	// Create a minimal app that would use the occupied port
+	testDir := testcommon.CreateTmpDir(t.Name())
+	t.Cleanup(func() {
+		_ = os.RemoveAll(testDir)
+	})
+
+	app, err := ddevapp.NewApp(testDir, true)
+	require.NoError(t, err)
+	app.RouterHTTPPort = occupiedPort
+	app.Name = t.Name()
+
+	// Test 1: With SkipRouterPortCheck=false (default), CheckRouterPorts should return an error
+	globalconfig.DdevGlobalConfig.SkipRouterPortCheck = false
+	err = ddevapp.CheckRouterPorts([]*ddevapp.DdevApp{app})
+	require.Error(t, err, "CheckRouterPorts should fail when port is occupied and SkipRouterPortCheck=false")
+	require.Contains(t, err.Error(), "already in use")
+
+	// Test 2: With SkipRouterPortCheck=true, CheckRouterPorts should skip the check and return nil
+	globalconfig.DdevGlobalConfig.SkipRouterPortCheck = true
+	err = ddevapp.CheckRouterPorts([]*ddevapp.DdevApp{app})
+	require.NoError(t, err, "CheckRouterPorts should succeed when SkipRouterPortCheck=true, even with occupied port")
+}
