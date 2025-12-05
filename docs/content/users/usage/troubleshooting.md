@@ -178,6 +178,34 @@ We welcome your [suggestions](https://github.com/ddev/ddev/issues/new) based on 
 
 On WSL2 it’s harder to debug this because the port may be occupied either on the traditional Windows side, or within your WSL2 distro. This means you may have to debug it in both places, perhaps using both the Windows techniques shown above and the Linux techniques shown above. The ports are shared between Windows and WSL2, so they can be broken on either side.
 
+### False Positives from Endpoint Protection Software
+
+Some endpoint protection software (such as ESET, CrowdStrike, Bitdefender, etc.) intercepts localhost TCP traffic and returns synthetic SYN-ACK responses to port scans. This can make DDEV report that ports are "busy" even when no application is actually using them.
+
+**Symptoms:**
+
+* DDEV reports port conflicts, but `lsof`, `netstat`, or other tools show nothing listening on those ports.
+* Docker can still successfully bind and use the ports.
+* The issue appeared after installing or updating endpoint protection software.
+
+**Solution:**
+
+If you've verified that no application is actually using the ports (using the diagnostic techniques above), you can tell DDEV to skip its pre-flight port scan:
+
+```bash
+ddev config global --skip-router-port-check
+```
+
+This disables the TCP dial test that checks port availability before starting. Docker will still attempt to bind the ports, so if there's a real conflict, Docker will report it. This option only skips the heuristic check that can be fooled by endpoint protection software.
+
+To re-enable port checking:
+
+```bash
+ddev config global --skip-router-port-check=false
+```
+
+See [GitHub issue #7921](https://github.com/ddev/ddev/issues/7921) for more details about this issue.
+
 ## Database Container Fails to Start
 
 Use `ddev logs -s db` to see what’s wrong.
